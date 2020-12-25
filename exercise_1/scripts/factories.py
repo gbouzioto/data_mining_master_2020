@@ -64,8 +64,13 @@ class DateTimeMixin(BaseMixin):
         super(DateTimeMixin, self).__init__(fake)
         self._fake.add_provider(date_time)
 
-    def year(self):
-        return self._fake.year()
+    def date(self, start_date='-30y', end_date='-10y'):
+        """
+        :param start_date: start_date
+        :param end_date: end_date
+        """
+        date = self._fake.date_between(start_date=start_date, end_date=end_date)
+        return date.strftime("%d/%m/%Y")
 
     def timestamp(self):
         return self._fake.date_time()
@@ -86,8 +91,11 @@ class LoremMixin(BaseMixin):
         """
         return self._fake.sentence(nb_words=nb_words)
 
-    def text(self):
-        return self._fake.text()
+    def text(self, max_nb_chars=200):
+        """
+        :param max_nb_chars: Number of characters to be included
+        """
+        return self._fake.text(max_nb_chars)
 
     def __str__(self):
         return "LoremMixin"
@@ -139,9 +147,10 @@ class AddressFactory(object):
         Generator of Address objects
         :param n: number of objects to be generated
         """
-        for i in enumerate(range(n), start=1):
-            data = {"address_id": i, "address_name": _fg.address_name(), "address_number": _fg.address_number(),
-                    "city": _fg.city(), "country": _fg.country(), "postal_code": _fg.postal_code()}
+        for address_id in range(1, n + 1):
+            data = {"address_id": address_id, "address_name": _fg.address_name(),
+                    "address_number": _fg.address_number(), "city": _fg.city(), "country": _fg.country(),
+                    "postal_code": _fg.postal_code()}
             yield ent.Address.build_from_data(data)
 
     def __str__(self):
@@ -195,16 +204,47 @@ class ScientistFactory(object):
         :param n: number of objects to be generated
         :return: A dictionary mapping scientists to their title
         """
-        mapper = {
-            c.PROFESSOR: [],
-            c.ASSOCIATE_PROFESSOR: [],
-            c.ASSISTANT_PROFESSOR: [],
-            c.LECTURER: [],
-            c.LABORATORY_TEACHING_STAFF: [],
-            c.PHD_CANDIDATE: []}
+        mapper = {key: [] for key in c.SCIENTIST_TITLES["names"]}
         for sct in ScientistFactory.generate_scientists(n):
             mapper[sct.title].append(sct)
         return mapper
 
     def __str__(self):
         return "ScientistFactory"
+
+
+class PHDFactory(object):
+    """Class used for generating fake PHD entities"""
+
+    @staticmethod
+    def generate_phds(n=10):
+        """
+        Generator of ScientistFactory objects
+        :param n: number of objects to be generated
+        """
+        for phd_id in range(1, n + 1):
+            nb_words = random.randint(11, 22)
+            max_nb_chars = random.randint(1000, 2000)
+            data = {"phd_id": phd_id, "date_received": _fg.date(),
+                    "description": _fg.text(max_nb_chars=max_nb_chars), "title": _fg.sentence(nb_words=nb_words)}
+            yield ent.PHD.build_from_data(data)
+
+    def __str__(self):
+        return "PHDFactory"
+
+
+class ConferenceFactory(object):
+    """Class used for generating fake Conference entities"""
+
+    @staticmethod
+    def generate_unique_conferences():
+        """
+        Generator of unique Conference objects
+        """
+        for conf_id, data in enumerate(c.CONFERENCES):
+            title, start_date, end_date = data
+            data = {"conference_id": conf_id, "start_date": start_date, "end_date": end_date, "title": title}
+            yield ent.Conference.build_from_data(data)
+
+    def __str__(self):
+        return "ConferenceFactory"
