@@ -1,9 +1,12 @@
 import decimal
 import random
-import constants as c
-import entities as ent
+import datetime
+
 from faker import Faker
 from faker.providers import person, phone_number, internet, address, date_time, lorem, misc
+
+import constants as c
+import entities as ent
 
 
 class BaseMixin(object):
@@ -72,8 +75,25 @@ class DateTimeMixin(BaseMixin):
         date = self._fake.date_between(start_date=start_date, end_date=end_date)
         return date.strftime("%d/%m/%Y")
 
-    def timestamp(self):
-        return self._fake.date_time()
+    def funding_start_end_date(self, funding):
+        """
+        :param funding: the funding amount
+        :return: a tuple of start and end dates
+        """
+        date = self._fake.date_between(start_date='-3y', end_date='-1y')
+        if funding in range(500000):
+            delta = datetime.timedelta(weeks=24)
+        elif funding in range(500001, 1000000):
+            delta = datetime.timedelta(weeks=48)
+        elif funding in range(1000001, 2000000):
+            delta = datetime.timedelta(weeks=72)
+        elif funding in range(2000001, 3000000):
+            delta = datetime.timedelta(weeks=96)
+        elif funding in range(3000001, 4000001):
+            delta = datetime.timedelta(weeks=110)
+        else:
+            delta = datetime.timedelta(weeks=140)
+        return date.strftime("%d/%m/%Y"), (date + delta).strftime("%d/%m/%Y")
 
     def __str__(self):
         return "DateTimeMixin"
@@ -109,12 +129,14 @@ class MiscMixin(BaseMixin):
         self._fake.add_provider(internet)
 
     @staticmethod
-    def score():
-        return random.randint(1, 5)
-
-    @staticmethod
-    def money():
-        return decimal.Decimal(random.randrange(10000))/100
+    def budget(start=50000, limit=4000000):
+        """
+        :param start: starting budget
+        :param limit: budget limit
+        :return: a float number
+        """
+        num = format(random.randint(start, limit), '.2f')
+        return decimal.Decimal(num)
 
     def __str__(self):
         return "MiscMixin"
@@ -189,7 +211,7 @@ class ScientistFactory(object):
     @staticmethod
     def generate_scientists(n=10):
         """
-        Generator of ScientistFactory objects
+        Generator of Scientist objects
         :param n: number of objects to be generated
         """
         for sct_id, title in enumerate(random.choices(c.SCIENTIST_TITLES["names"],
@@ -219,7 +241,7 @@ class PHDFactory(object):
     @staticmethod
     def generate_phds(n=10):
         """
-        Generator of ScientistFactory objects
+        Generator of PHD objects
         :param n: number of objects to be generated
         """
         for phd_id in range(1, n + 1):
@@ -248,3 +270,42 @@ class ConferenceFactory(object):
 
     def __str__(self):
         return "ConferenceFactory"
+
+
+class PublicationFactory(object):
+    """Class used for generating fake Publication entities"""
+
+    @staticmethod
+    def generate_publications(n=10):
+        """
+        Generator of Publication objects
+        :param n: number of objects to be generated
+        """
+        for pub_id in range(1, n + 1):
+            nb_words = random.randint(10, 15)
+            max_nb_chars = random.randint(2000, 3000)
+            data = {"publication_id": pub_id, "title": _fg.sentence(nb_words), "summary": _fg.text(max_nb_chars)}
+            yield ent.Publication.build_from_data(data)
+
+    def __str__(self):
+        return "PublicationFactory"
+
+
+class FundingFactory(object):
+    """Class used for generating fake Publication entities"""
+
+    @staticmethod
+    def generate_fundings(n=10):
+        """
+        Generator of Funding objects
+        :param n: number of objects to be generated
+        """
+        for fund_id, funder in enumerate(random.choices(c.FUNDING["names"], c.FUNDING["weights"], k=n), start=1):
+            budget = _fg.budget()
+            start_date, end_date = _fg.funding_start_end_date(budget)
+            data = {"funding_id": fund_id, "funder": funder, "budget": budget, "start_date": start_date,
+                    "end_date": end_date}
+            yield ent.Funding.build_from_data(data)
+
+    def __str__(self):
+        return "PublicationFactory"

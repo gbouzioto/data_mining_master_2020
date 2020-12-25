@@ -1,6 +1,8 @@
 """Constants"""
+# University names
 EKPA = "National and Kapodistrian University of Athens"
 
+# Faculty names
 ECONOMICS_AND_POLITICAL_SCIENCES = "ECONOMICS AND POLITICAL SCIENCES"
 EDUCATION = "EDUCATION"
 HEALTH_SCIENCES = "HEALTH SCIENCES"
@@ -12,12 +14,25 @@ THEOLOGY = "THEOLOGY"
 AGRICULTURAL_DEVELOPMENT = "AGRICULTURAL DEVELOPMENT"
 NUTRITION_AND_SUSTAINABILITY = "NUTRITION AND SUSTAINABILITY"
 
+# Faculty staff titles
 PROFESSOR = "Professor"
 ASSOCIATE_PROFESSOR = "Associate Professor"
 ASSISTANT_PROFESSOR = "Assistant Professor"
 LECTURER = "Lecturer"
 LABORATORY_TEACHING_STAFF = "Laboratory Teaching Staff"
 RESEARCHER = "Researcher"
+
+# Funder titles
+EUROPEAN_UNION = "European Union"
+UNDP = "UNDP"
+NATIONAL_FUND = "National Fund"
+MINISTRY_OF_AGRICULTURE = "Ministry of Agriculture"
+MINISTRY_OF_HEALTH = "Ministry of Health"
+MINISTRY_OF_TOURISM = "Ministry of Tourism"
+NATIONAL_BANK_OF_GREECE = "National Bank of Greece"
+EURO_BANK = "Eurobank"
+PEIREUS_BANK = "Peireus bank"
+ALPHA_BANK = "Alphabank"
 
 UNIS = [EKPA]
 
@@ -112,3 +127,19 @@ CONFERENCES = [
     ["International conference on arts and humanities (ICAH)", "11/2/2019", "12/2/2019"],
     ["International conference on biological and medical sciences (ICBMS) ", "12/2/2019", "13/2/2019"]
 ]
+
+
+FUNDING = {
+    "names": [
+        EUROPEAN_UNION,
+        UNDP,
+        NATIONAL_FUND,
+        MINISTRY_OF_AGRICULTURE,
+        MINISTRY_OF_HEALTH,
+        MINISTRY_OF_TOURISM,
+        NATIONAL_BANK_OF_GREECE,
+        EURO_BANK,
+        PEIREUS_BANK,
+        ALPHA_BANK],
+    "weights": [0.25, 0.15, 0.1, 0.05, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1]
+}
