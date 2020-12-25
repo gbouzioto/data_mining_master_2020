@@ -29,7 +29,6 @@ ALTER TABLE IF EXISTS ONLY public.phd DROP CONSTRAINT IF EXISTS phd_scientist_sc
 ALTER TABLE IF EXISTS ONLY public.funding DROP CONSTRAINT IF EXISTS funding_scientist_scientist_id_fk;
 ALTER TABLE IF EXISTS ONLY public.funding_funds_phd DROP CONSTRAINT IF EXISTS funding_funds_phd_phd_phd_id_fk;
 ALTER TABLE IF EXISTS ONLY public.funding_funds_phd DROP CONSTRAINT IF EXISTS funding_funds_phd_funding_funding_id_fk;
-ALTER TABLE IF EXISTS ONLY public.faculty DROP CONSTRAINT IF EXISTS faculty_address_address_id_fk;
 ALTER TABLE IF EXISTS ONLY public.conference DROP CONSTRAINT IF EXISTS conference_faculty_faculty_id_fk;
 ALTER TABLE IF EXISTS ONLY public.conference DROP CONSTRAINT IF EXISTS conference_address_address_id_fk;
 DROP INDEX IF EXISTS public.publication_publication_id_uindex;
@@ -148,7 +147,8 @@ ALTER SEQUENCE public.conference_conference_id_seq OWNED BY public.conference.co
 
 CREATE TABLE public.faculty (
     faculty_id bigint NOT NULL,
-    address_id bigint NOT NULL
+    name character varying NOT NULL,
+    university_name character varying NOT NULL
 );
 
 
@@ -526,14 +526,6 @@ ALTER TABLE ONLY public.conference
 
 ALTER TABLE ONLY public.conference
     ADD CONSTRAINT conference_faculty_faculty_id_fk FOREIGN KEY (faculty_id) REFERENCES public.faculty(faculty_id);
-
-
---
--- Name: faculty faculty_address_address_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.faculty
-    ADD CONSTRAINT faculty_address_address_id_fk FOREIGN KEY (address_id) REFERENCES public.address(address_id);
 
 
 --
