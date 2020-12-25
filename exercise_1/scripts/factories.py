@@ -214,9 +214,10 @@ class ScientistFactory(object):
         Generator of Scientist objects
         :param n: number of objects to be generated
         """
-        for title in random.choices(c.SCIENTIST_TITLES["names"], c.SCIENTIST_TITLES["weights"], k=n):
+        for sct_id, title in enumerate(random.choices(c.SCIENTIST_TITLES["names"],
+                                                      c.SCIENTIST_TITLES["weights"], k=n), start=1):
             name, surname = _fg.first_name_and_last_name()
-            data = {"title": title, "name": name, "surname": surname}
+            data = {"scientist_id": sct_id, "title": title, "name": name, "surname": surname}
             yield ent.Scientist.build_from_data(data)
 
     @staticmethod
@@ -243,11 +244,11 @@ class PHDFactory(object):
         Generator of PHD objects
         :param n: number of objects to be generated
         """
-        for _ in range(n):
+        for phd_id in range(1, n + 1):
             nb_words = random.randint(11, 22)
             max_nb_chars = random.randint(1000, 2000)
-            data = {"date_received": _fg.date(), "description": _fg.text(max_nb_chars=max_nb_chars),
-                    "title": _fg.sentence(nb_words=nb_words)}
+            data = {"phd_id": phd_id, "date_received": _fg.date(),
+                    "description": _fg.text(max_nb_chars=max_nb_chars), "title": _fg.sentence(nb_words=nb_words)}
             yield ent.PHD.build_from_data(data)
 
     def __str__(self):
@@ -262,9 +263,9 @@ class ConferenceFactory(object):
         """
         Generator of unique Conference objects
         """
-        for data in c.CONFERENCES:
+        for conf_id, data in enumerate(c.CONFERENCES):
             title, start_date, end_date = data
-            data = {"start_date": start_date, "end_date": end_date, "title": title}
+            data = {"conference_id": conf_id, "start_date": start_date, "end_date": end_date, "title": title}
             yield ent.Conference.build_from_data(data)
 
     def __str__(self):
@@ -280,10 +281,10 @@ class PublicationFactory(object):
         Generator of Publication objects
         :param n: number of objects to be generated
         """
-        for _ in range(n):
+        for pub_id in range(1, n + 1):
             nb_words = random.randint(10, 15)
             max_nb_chars = random.randint(2000, 3000)
-            data = {"title": _fg.sentence(nb_words), "summary": _fg.text(max_nb_chars)}
+            data = {"publication_id": pub_id, "title": _fg.sentence(nb_words), "summary": _fg.text(max_nb_chars)}
             yield ent.Publication.build_from_data(data)
 
     def __str__(self):
@@ -299,10 +300,11 @@ class FundingFactory(object):
         Generator of Funding objects
         :param n: number of objects to be generated
         """
-        for funder in random.choices(c.FUNDING["names"], c.FUNDING["weights"], k=n):
+        for fund_id, funder in enumerate(random.choices(c.FUNDING["names"], c.FUNDING["weights"], k=n), start=1):
             budget = _fg.budget()
             start_date, end_date = _fg.funding_start_end_date(budget)
-            data = {"funder": funder, "budget": budget, "start_date": start_date, "end_date": end_date}
+            data = {"funding_id": fund_id, "funder": funder, "budget": budget, "start_date": start_date,
+                    "end_date": end_date}
             yield ent.Funding.build_from_data(data)
 
     def __str__(self):
