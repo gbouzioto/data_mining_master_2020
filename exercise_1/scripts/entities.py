@@ -162,8 +162,6 @@ class ScientistWorksAtFaculty(BaseEntity):
     def __init__(self):
         self.faculty_id = None
         self.scientist_id = None
-        self.start_date = None
-        self.end_date = None
 
     def __str__(self):
         return f"ScientistWorksAtFaculty(faculty_id={self.faculty_id}, scientist_id=({self.scientist_id})"

@@ -164,12 +164,13 @@ class AddressFactory(object):
     """Class used for generating fake Address entities"""
 
     @staticmethod
-    def generate_addresses(n=1):
+    def generate_addresses(n=1, start=1):
         """
         Generator of Address objects
         :param n: number of objects to be generated
+        :param start: the starting id
         """
-        for address_id in range(1, n + 1):
+        for address_id in range(start, n + start):
             data = {"address_id": address_id, "address_name": _fg.address_name(),
                     "address_number": _fg.address_number(), "city": _fg.city(), "country": _fg.country(),
                     "postal_code": _fg.postal_code()}
@@ -183,12 +184,13 @@ class FacultyFactory(object):
     """Class used for generating fake Address entities"""
 
     @staticmethod
-    def generate_faculties(n=10):
+    def generate_faculties(n=10, start=1):
         """
         Generator of Faculty objects
         :param n: number of objects to be generated
+        :param start: the starting id
         """
-        for fac_id, name in enumerate(random.choices(c.FACULTIES["names"], c.FACULTIES["weights"], k=n), start=1):
+        for fac_id, name in enumerate(random.choices(c.FACULTIES["names"], c.FACULTIES["weights"], k=n), start=start):
             data = {"faculty_id": fac_id, "name": name, "university_name": c.EKPA}
             yield ent.Faculty.build_from_data(data)
 
@@ -197,7 +199,7 @@ class FacultyFactory(object):
         """
         Generator of unique Faculty objects
         """
-        for fac_id, name in enumerate(c.FACULTIES["names"]):
+        for fac_id, name in enumerate(c.FACULTIES["names"], start=1):
             data = {"faculty_id": fac_id, "name": name, "university_name": c.EKPA}
             yield ent.Faculty.build_from_data(data)
 
@@ -209,25 +211,27 @@ class ScientistFactory(object):
     """Class used for generating fake Address entities"""
 
     @staticmethod
-    def generate_scientists(n=10):
+    def generate_scientists(n=10, start=1):
         """
         Generator of Scientist objects
         :param n: number of objects to be generated
+        :param start: the starting id
         """
         for sct_id, title in enumerate(random.choices(c.SCIENTIST_TITLES["names"],
-                                                      c.SCIENTIST_TITLES["weights"], k=n), start=1):
+                                                      c.SCIENTIST_TITLES["weights"], k=n), start=start):
             name, surname = _fg.first_name_and_last_name()
             data = {"scientist_id": sct_id, "title": title, "name": name, "surname": surname}
             yield ent.Scientist.build_from_data(data)
 
     @staticmethod
-    def generate_scientists_per_title(n=10):
+    def generate_scientists_per_title(n=10, start=1):
         """
         :param n: number of objects to be generated
         :return: A dictionary mapping scientists to their title
+        :param start: the starting id
         """
         mapper = {key: [] for key in c.SCIENTIST_TITLES["names"]}
-        for sct in ScientistFactory.generate_scientists(n):
+        for sct in ScientistFactory.generate_scientists(n, start):
             mapper[sct.title].append(sct)
         return mapper
 
@@ -239,12 +243,13 @@ class PHDFactory(object):
     """Class used for generating fake PHD entities"""
 
     @staticmethod
-    def generate_phds(n=10):
+    def generate_phds(n=10, start=1):
         """
         Generator of PHD objects
         :param n: number of objects to be generated
+        :param start: the starting id
         """
-        for phd_id in range(1, n + 1):
+        for phd_id in range(start, n + start):
             nb_words = random.randint(11, 22)
             max_nb_chars = random.randint(1000, 2000)
             data = {"phd_id": phd_id, "date_received": _fg.date(),
@@ -263,7 +268,7 @@ class ConferenceFactory(object):
         """
         Generator of unique Conference objects
         """
-        for conf_id, data in enumerate(c.CONFERENCES):
+        for conf_id, data in enumerate(c.CONFERENCES, start=1):
             title, start_date, end_date = data
             data = {"conference_id": conf_id, "start_date": start_date, "end_date": end_date, "title": title}
             yield ent.Conference.build_from_data(data)
@@ -276,12 +281,13 @@ class PublicationFactory(object):
     """Class used for generating fake Publication entities"""
 
     @staticmethod
-    def generate_publications(n=10):
+    def generate_publications(n=10, start=1):
         """
         Generator of Publication objects
         :param n: number of objects to be generated
+        :param start: the starting id
         """
-        for pub_id in range(1, n + 1):
+        for pub_id in range(start, n + start):
             nb_words = random.randint(10, 15)
             max_nb_chars = random.randint(2000, 3000)
             data = {"publication_id": pub_id, "title": _fg.sentence(nb_words), "summary": _fg.text(max_nb_chars)}
@@ -295,12 +301,13 @@ class FundingFactory(object):
     """Class used for generating fake Publication entities"""
 
     @staticmethod
-    def generate_fundings(n=10):
+    def generate_fundings(n=10, start=1):
         """
         Generator of Funding objects
         :param n: number of objects to be generated
+        :param start: the starting id
         """
-        for fund_id, funder in enumerate(random.choices(c.FUNDING["names"], c.FUNDING["weights"], k=n), start=1):
+        for fund_id, funder in enumerate(random.choices(c.FUNDING["names"], c.FUNDING["weights"], k=n), start=start):
             budget = _fg.budget()
             start_date, end_date = _fg.funding_start_end_date(budget)
             data = {"funding_id": fund_id, "funder": funder, "budget": budget, "start_date": start_date,

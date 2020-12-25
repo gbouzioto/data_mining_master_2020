@@ -1,6 +1,9 @@
 import functools
+import random
 
 import psycopg2
+import factories as f
+import constants as c
 from psycopg2.extras import execute_values
 
 
@@ -21,6 +24,37 @@ def safe_connection(error_msg=None):
     return _safe_connection
 
 
+class _SQL(object):
+    """Helper class that holds all sql statements used by the DB"""
+    ADJUST_DATE_SQL = """
+    SET datestyle = dmy
+    """
+    ADDRESS_SQL = """
+        insert into address(address_name, address_number, city, country, postal_code)
+        values %s
+   """
+    FACULTY_SQL = """
+        insert into faculty(name, university_name)
+        values %s
+    """
+    CONFERENCE_SQL = """
+        insert into conference(faculty_id, address_id, start_date, end_date, title)
+        values %s
+    """
+    SCIENTIST_SQL = """
+        insert into scientist(title, name, surname)
+        values %s
+    """
+    PHD_SQL = """
+        insert into phd(date_received, description, supervisor_id, title, scientist_id)
+        values %s
+    """
+    SCIENTIST_WORKS_AT_FACULTY_SQL = """
+        insert into scientist_works_at_faculty(faculty_id, scientist_id)
+        values %s
+    """
+
+
 class ScientificCommunityDBManager(object):
     """DB Wrapper for the scientific_community database"""
 
@@ -35,97 +69,88 @@ class ScientificCommunityDBManager(object):
         self._cursor.close()
         self._conn.close()
 
-    def insert_parsed_data(self, author_data, book_data):
+    @safe_connection("Error in executing generate_and_insert_fake_data method")
+    def generate_and_insert_fake_data(self):
         """
-        Inserts all parsed data into the database.
-        :param author_data: {"author_id": database.entities.Author}
-        :param book_data: {book_id: {"book": "database.entities.Book",
-                           "book_authors": {author_id: database.entities.BookAuthor},
-                           "author_ordinal": int, "reviews": [database.entities.Review],
-                           "publisher": database.entities.Publisher}
+        Generates and inserts all fake data
         """
-        self._insert_authors(author_data)
-        self._insert_relations(book_data)
+        # some constants
+        fac_num = 10
+        conf_num = 50
+        sc_per_fac = 40
 
-    def _insert_authors(self, author_data):
-        """
-        Inserts all the authors provided in the data
-        :param author_data: {"author_id": database.entities.Author}
-        """
-        sql = """
-                insert into "2016_author" (gender, name, nationality)
-                values %s
-                """
-        id_count = 1
-        values = []
-        for author_id, author_data in author_data.items():
-            # map the ids of the authors to the ids in the database
-            # so the relation book_author can be filled
-            self._author_id_mapper[author_id] = id_count
-            values.append(author_data.to_list())
-            id_count += 1
-        execute_values(cur=self._cursor, sql=sql, argslist=values)
+        # generate and insert faculties
+        faculties = list(f.FacultyFactory.generate_unique_faculties())
+        values = [[fac.name, fac.university_name] for fac in faculties]
+        execute_values(self._cursor, sql=_SQL.FACULTY_SQL, argslist=values)
+
+        # generate and insert addresses
+        addresses = list(f.AddressFactory.generate_addresses(n=conf_num))
+        values = [[ad.address_name, ad.address_number, ad.city, ad.postal_code, ad.country] for ad in addresses]
+        execute_values(self._cursor, sql=_SQL.ADDRESS_SQL, argslist=values)
+
+        # adjust date
+        self._cursor.execute(_SQL.ADJUST_DATE_SQL)
+        # generate and insert conferences
+        conferences = list(f.ConferenceFactory.generate_unique_conferences())
+        self._map_conferences(conferences, conf_num, fac_num)
+        values = [[conf.faculty_id, conf.address_id, conf.start_date, conf.end_date, conf.title]
+                  for conf in conferences]
+        execute_values(self._cursor, sql=_SQL.CONFERENCE_SQL, argslist=values)
+
+        # generate and insert scientists along with their phds
+        self._generate_and_insert_scientists_and_phds(fac_num, sc_per_fac)
         self._conn.commit()
 
-    def _insert_relations(self, book_data):
+    @staticmethod
+    def _map_conferences(conferences, conf_num, fac_num):
         """
-        Inserts all data from the book_data gathered along with their relations.
-        :param book_data: {book_id: {"book": "database.entities.Book",
-                           "book_authors": {author_id: database.entities.BookAuthor},
-                           "author_ordinal": int, "reviews": [database.entities.Review],
-                           "publisher": database.entities.Publisher}
+        Maps conferences to faculties
+        :param conferences: a list with Conference objects
+        :param conf_num: number of conferences
+        :param fac_num: number of faculties
         """
+        fac_id = 1
+        conf_per_fac = conf_num // fac_num
+        for idx, conf in enumerate(conferences, start=1):
+            conf.faculty_id = fac_id
+            conf.address_id = idx
+            if idx % conf_per_fac == 0:
+                fac_id += 1
 
-        pub_sql = """
-            insert into "2016_publisher"(name, phone_number, address_id) 
-            values (%s, %s, %s)
-            """
-        book_sql = """
-            insert into "2016_book"(isbn, current_price, description, publication_year, title, publisher_id) 
-                values (%s, %s, %s, %s, %s, %s)
+    def _generate_and_insert_scientists_and_phds(self, fac_num, sc_per_fac):
         """
-        review_sql = """
-            insert into "2016_review"(created, score, text)
-            values (%s, %s, %s)
+        Generates and inserts scientists to their faculties and phds
+        ScientistFactory.generate_scientists_per_title
+        :param fac_num: number of faculties
+        :param sc_per_fac: number of scientists per faculty
         """
-        book_author_sql = """
-            insert into "2016_book_author"(author_id, book_id, author_ordinal, role) 
-            values (%s, %s, %s, %s)
-        """
-        book_review_sql = """
-            insert into "2016_book_review"(book_id, review_id) 
-            values (%s, %s)
-        """
-        # initial id values
-        cur_book_id = 1
-        cur_pub_id = 1
-        cur_review_id = 0
-
-        for data in book_data.values():
-            book = data["book"]
-
-            # Publisher query
-            if publisher := data.get("publisher"):
-                self._cursor.execute(pub_sql, [publisher.name, publisher.phone_number, publisher.address])
-                book.publisher = cur_pub_id
-                cur_pub_id += 1
-            # Book query
-            self._cursor.execute(book_sql, [book.isbn, book.current_price, book.description,
-                                 book.publication_year, book.title, book.publisher])
-            # Author and Book Author query
-            if book_authors := data.get("book_authors"):
-                for author_id, book_author in book_authors.items():
-                    self._cursor.execute(book_author_sql, [self._author_id_mapper[author_id],
-                                                           cur_book_id, book_author.ordinal,
-                                                           book_author.role])
-            # Review and Book Review query
-            if reviews := data.get("reviews"):
-                for review in reviews:
-                    self._cursor.execute(review_sql, [review.created, review.score, review.text])
-                    cur_review_id += 1
-                    self._cursor.execute(book_review_sql, [cur_book_id, cur_review_id])
-            cur_book_id += 1
-            self._conn.commit()
+        fac_id = 1
+        phd_starting_id = 1
+        scientist_starting_id = 1
+        for i in range(1, fac_num + 1):
+            scientists = f.ScientistFactory.generate_scientists_per_title(sc_per_fac, start=scientist_starting_id)
+            plain_scientists = [sc for sc_list in scientists.values() for sc in sc_list]
+            # insert scientists
+            values = [[sc.title, sc.name, sc.surname] for sc in plain_scientists]
+            execute_values(self._cursor, sql=_SQL.SCIENTIST_SQL, argslist=values)
+            # insert scientist_works_at_faculty relation
+            values = [[fac_id, sc.scientist_id] for sc in plain_scientists]
+            execute_values(self._cursor, sql=_SQL.SCIENTIST_WORKS_AT_FACULTY_SQL, argslist=values)
+            # insert phds
+            prof_list = scientists[c.PROFESSOR] + scientists[c.ASSISTANT_PROFESSOR] + scientists[c.ASSOCIATE_PROFESSOR]
+            student_list = scientists[c.LECTURER] + scientists[c.RESEARCHER] + scientists[c.LABORATORY_TEACHING_STAFF]
+            phd_ids = len(student_list)
+            phds = list(f.PHDFactory.generate_phds(phd_ids, start=phd_starting_id))
+            for j in range(phd_ids):
+                phds[j].scientist_id = student_list[j].scientist_id
+                for prof in random.choices(prof_list):
+                    phds[j].supervisor_id = prof.scientist_id
+            values = [[phd.date_received, phd.description, phd.supervisor_id, phd.title, phd.scientist_id]
+                      for phd in phds]
+            execute_values(self._cursor, sql=_SQL.PHD_SQL, argslist=values)
+            phd_starting_id += phd_ids
+            scientist_starting_id += sc_per_fac
 
     @safe_connection("Error in executing commit method")
     def commit(self):
@@ -143,74 +168,6 @@ class ScientificCommunityDBManager(object):
         sql = """truncate "%s" restart identity cascade""" % table_name
         self._cursor.execute(sql)
 
-    @safe_connection("Error in executing create test data method")
-    def create_test_data(self, user_num=10, order_per_user=5, address_per_user=3):
-        """
-        Creates data for testing. Note that this method modifies the book price on actual data.
-        If you want to restore their price to its previous value you will have to turn the first
-        (user_num x order_per_user) book ids back to null manually. For simplicity it is assumed that
-        the user always buys the same book in his order x  book_order_per_user times and that his
-        billing address is the same as his shipping address.
-
-        :param user_num: number of Fake users to be created
-        :param order_per_user: number of Fake orders per user
-        :param address_per_user: number of Fake addresses per user
-        """
-        book_sql = """update "2016_book" set current_price=%s where book_id=%s"""
-        user_sql = """
-           insert into "2016_user"(username, password, phone_number, email, real_name)
-           values %s
-        """
-        address_sql = """
-           insert into "2016_address"(address_name, address_number, city, country, postal_code)
-           values %s
-        """
-        user_address_sql = """
-           insert into "2016_user_address"(address_id, user_id, is_physical, is_shipping, is_billing, is_active) 
-           values %s
-        """
-        book_order_sql = """
-           insert into "2016_book_order"(book_id, order_id, quantity) 
-           values %s
-        """
-        order_sql = """
-           insert into "2016_order"(user_id, billing_address_id, shipping_address_id, placement) 
-           values %s
-        """
-
-        book_ids_num = user_num * order_per_user
-        print(f"\n ****** The first {book_ids_num} books were chosen ******\n")
-        # create fake prices
-        prices = [MiscMixin.money() for _ in range(book_ids_num)]
-        for i in range(book_ids_num):
-            self._cursor.execute(book_sql, (prices[i], i + 1))
-        # create fake users
-        users = list(UserFactory.generate_users(user_num))
-        values = [[user.username, user.password, user.phone_number, user.email, user.real_name] for user in users]
-        execute_values(self._cursor, user_sql, values)
-        # create fake addresses
-        address_nums = address_per_user * user_num
-        addresses = list(AddressFactory.generate_addresses(address_nums))
-        values = [[address.address_name, address.address_number, address.city, address.country, address.postal_code]
-                  for address in addresses]
-        execute_values(self._cursor, address_sql, values)
-        # create fake user addresses
-        user_address_mapper = {}
-        user_addresses = list(UserAddressFactory.generate_user_addresses(user_address_mapper,
-                                                                         user_num, address_per_user))
-        values = [[user_address.address, user_address.user, user_address.is_physical, user_address.is_shipping,
-                   user_address.is_billing, user_address.is_active] for user_address in user_addresses]
-        execute_values(self._cursor, user_address_sql, values)
-        # create fake orders
-        orders = list(OrderFactory.generate_orders(user_address_mapper, user_num, order_per_user))
-        values = [[order.user, order.billing_address, order.shipping_address, order.placement] for order in orders]
-        execute_values(self._cursor, order_sql, values)
-        # create fake book orders
-        book_orders = list(BookOrderFactory.generate_book_orders(book_ids_num, len(orders)))
-        values = [[book_order.book, book_order.order, book_order.quantity] for book_order in book_orders]
-        execute_values(self._cursor, book_order_sql, values)
-        self._conn.commit()
-
     @classmethod
     def create(cls, database, password, user="postgres", host="localhost", port="5432"):
         """
@@ -219,7 +176,7 @@ class ScientificCommunityDBManager(object):
         :param user: database user - defaults to postgres
         :param host: host ip - defaults to localhost
         :param port: connection port - defaults to 5432
-        :rtype: ComicBooksDBManager
+        :rtype: ScientificCommunityDBManager
         """
         db_manager = cls()
         try:

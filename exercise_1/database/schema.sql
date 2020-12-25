@@ -341,9 +341,7 @@ ALTER SEQUENCE public.scientist_scientist_id_seq OWNED BY public.scientist.scien
 
 CREATE TABLE public.scientist_works_at_faculty (
     faculty_id bigint NOT NULL,
-    scientist_id bigint NOT NULL,
-    start_date date NOT NULL,
-    end_date date
+    scientist_id bigint NOT NULL
 );
 
 

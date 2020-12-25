@@ -61,7 +61,7 @@ SCIENTIST_TITLES = {
         LABORATORY_TEACHING_STAFF,
         RESEARCHER,
     ],
-    "weights": [0.05, 0.1, 0.15, 0.15, 0.2, 0.35]
+    "weights": [0.075, 0.1, 0.125, 0.2, 0.25, 0.25]
 }
 
 CONFERENCES = [
