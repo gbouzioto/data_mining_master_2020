@@ -38,7 +38,7 @@ class _SQL(object):
         values %s
     """
     CONFERENCE_SQL = """
-        insert into conference(faculty_id, address_id, start_date, end_date, title)
+        insert into conference(faculty_id, address_id, start_date, end_date, title, fee)
         values %s
     """
     SCIENTIST_SQL = """
@@ -53,6 +53,26 @@ class _SQL(object):
         insert into scientist_works_at_faculty(faculty_id, scientist_id)
         values %s
     """
+    FUNDING_SQL = """
+        insert into funding(scientist_id, funder, budget, start_date, end_date)
+        values %s
+    """
+    FUNDING_FUNDS_PHD_SQL = """
+       insert into funding_funds_phd(funding_id, phd_id, working_hours_spent)
+       values %s
+   """
+    PUBLICATION_SQL = """
+       insert into publication(main_author_id, title, summary, conference_id, funding_id, won_first_prize)
+       values %s
+   """
+    PUBLICATION_SECONDARY_AUTHOR_SQL = """
+       insert into publication_secondary_author(author_id, publication_id)
+       values %s
+   """
+    SCIENTIST_PARTICIPATES_AT_CONFERENCE_SQL = """
+       insert into scientist_participates_at_conference(conference_id, scientist_id, is_volunteer)
+       values %s
+   """
 
 
 class ScientificCommunityDBManager(object):
@@ -94,18 +114,18 @@ class ScientificCommunityDBManager(object):
         # generate and insert conferences
         conferences = list(f.ConferenceFactory.generate_unique_conferences())
         self._map_conferences(conferences, conf_num, fac_num)
-        values = [[conf.faculty_id, conf.address_id, conf.start_date, conf.end_date, conf.title]
+        values = [[conf.faculty_id, conf.address_id, conf.start_date, conf.end_date, conf.title, conf.fee]
                   for conf in conferences]
         execute_values(self._cursor, sql=_SQL.CONFERENCE_SQL, argslist=values)
 
-        # generate and insert scientists along with their phds
-        self._generate_and_insert_scientists_and_phds(fac_num, sc_per_fac)
+        # generate and insert scientists along with their phds, publications and funding
+        self._generate_and_insert_scientist_relations(fac_num, sc_per_fac, len(conferences))
         self._conn.commit()
 
     @staticmethod
     def _map_conferences(conferences, conf_num, fac_num):
         """
-        Maps conferences to faculties
+        Maps conferences to their faculties and addresses
         :param conferences: a list with Conference objects
         :param conf_num: number of conferences
         :param fac_num: number of faculties
@@ -118,16 +138,22 @@ class ScientificCommunityDBManager(object):
             if idx % conf_per_fac == 0:
                 fac_id += 1
 
-    def _generate_and_insert_scientists_and_phds(self, fac_num, sc_per_fac):
+    def _generate_and_insert_scientist_relations(self, fac_num, sc_per_fac, conf_num):
         """
         Generates and inserts scientists to their faculties and phds
         ScientistFactory.generate_scientists_per_title
         :param fac_num: number of faculties
         :param sc_per_fac: number of scientists per faculty
+        :param conf_num: number of conferences
         """
         fac_id = 1
         phd_starting_id = 1
         scientist_starting_id = 1
+        funding_starting_id = 1
+        publication_starting_id = 1
+        # tracks which publications have already won a first prize
+        won_first_prize_ids = set()
+        scientists_participate_at_conf_mapping = {k: set() for k in range(1, conf_num + 1)}
         for i in range(1, fac_num + 1):
             scientists = f.ScientistFactory.generate_scientists_per_title(sc_per_fac, start=scientist_starting_id)
             plain_scientists = [sc for sc_list in scientists.values() for sc in sc_list]
@@ -139,18 +165,76 @@ class ScientificCommunityDBManager(object):
             execute_values(self._cursor, sql=_SQL.SCIENTIST_WORKS_AT_FACULTY_SQL, argslist=values)
             # insert phds
             prof_list = scientists[c.PROFESSOR] + scientists[c.ASSISTANT_PROFESSOR] + scientists[c.ASSOCIATE_PROFESSOR]
-            student_list = scientists[c.LECTURER] + scientists[c.RESEARCHER] + scientists[c.LABORATORY_TEACHING_STAFF]
-            phd_ids = len(student_list)
-            phds = list(f.PHDFactory.generate_phds(phd_ids, start=phd_starting_id))
-            for j in range(phd_ids):
-                phds[j].scientist_id = student_list[j].scientist_id
+            prof_num = len(prof_list)
+            non_prof_list = scientists[c.LECTURER] + scientists[c.RESEARCHER] + scientists[c.LABORATORY_TEACHING_STAFF]
+            phd_num = len(non_prof_list)
+            phds = list(f.PHDFactory.generate_phds(phd_num, start=phd_starting_id))
+            for j in range(phd_num):
+                phds[j].scientist_id = non_prof_list[j].scientist_id
                 for prof in random.choices(prof_list):
                     phds[j].supervisor_id = prof.scientist_id
             values = [[phd.date_received, phd.description, phd.supervisor_id, phd.title, phd.scientist_id]
                       for phd in phds]
             execute_values(self._cursor, sql=_SQL.PHD_SQL, argslist=values)
-            phd_starting_id += phd_ids
+            # insert funding
+            funding = list(f.FundingFactory.generate_funding(prof_num, funding_starting_id))
+            funding_num = len(funding)
+            values = []
+            for j in range(prof_num):
+                funding[j].scientist_id = prof_list[j].scientist_id
+                values.append([funding[j].scientist_id, funding[j].funder, funding[j].budget, funding[j].start_date,
+                               funding[j].end_date])
+            execute_values(self._cursor, sql=_SQL.FUNDING_SQL, argslist=values)
+            # give each phd a funding randomly
+            values = []
+            for phd in phds:
+                for fund in random.choices(funding):
+                    values.append([fund.funding_id, phd.phd_id, f.MiscMixin.phd_working_hours(fund.budget)])
+            execute_values(self._cursor, sql=_SQL.FUNDING_FUNDS_PHD_SQL, argslist=values)
+            # insert publications
+            publications = list(f.PublicationFactory.generate_publications(prof_num, publication_starting_id))
+            publications_num = len(publications)
+            values = []
+            for j in range(prof_num):
+                publications[j].main_author_id = prof_list[j].scientist_id
+                publications[j].funding_id = random.randint(funding_starting_id, len(funding) + funding_starting_id - 1)
+                publications[j].conference_id = random.randint(1, conf_num)
+                # if there is no other first prize publication in the conference, attempt to win the first prize
+                if not publications[j].conference_id in won_first_prize_ids:
+                    if f.MiscMixin.publication_wins_first_prize():
+                        publications[j].won_first_prize = True
+                        won_first_prize_ids.add(publications[j].conference_id)
+                values.append([publications[j].main_author_id, publications[j].title, publications[j].summary,
+                               publications[j].conference_id, publications[j].funding_id,
+                               publications[j].won_first_prize])
+            execute_values(self._cursor, sql=_SQL.PUBLICATION_SQL, argslist=values)
+            # insert publication secondary authors
+            values = []
+            for pub in publications:
+                # select up to five non professor individuals for each publication
+                temp_list = non_prof_list[:]
+                for non_prof in f.MiscMixin.choices_no_replacement(temp_list, k=random.randint(1, 5)):
+                    values.append([non_prof.scientist_id, pub.publication_id])
+            execute_values(self._cursor, sql=_SQL.PUBLICATION_SECONDARY_AUTHOR_SQL, argslist=values)
+
+            # insert scientist participates at conference randomly
+            values = []
+            for sc in plain_scientists:
+                # get a random_conference id
+                conference_id = random.randint(1, conf_num)
+                if sc.scientist_id in scientists_participate_at_conf_mapping[conference_id]:
+                    # scientist already participated in that conference
+                    continue
+                scientists_participate_at_conf_mapping[conference_id].add(sc.scientist_id)
+                is_volunteer = f.MiscMixin.is_volunteer()
+                values.append([conference_id, sc.scientist_id, is_volunteer])
+            execute_values(self._cursor, sql=_SQL.SCIENTIST_PARTICIPATES_AT_CONFERENCE_SQL, argslist=values)
+
+            # update ids
+            phd_starting_id += phd_num
             scientist_starting_id += sc_per_fac
+            funding_starting_id += funding_num
+            publication_starting_id += publications_num
 
     @safe_connection("Error in executing commit method")
     def commit(self):

@@ -129,7 +129,7 @@ class MiscMixin(BaseMixin):
         self._fake.add_provider(internet)
 
     @staticmethod
-    def budget(start=50000, limit=4000000):
+    def budget(start=500000, limit=4000000):
         """
         :param start: starting budget
         :param limit: budget limit
@@ -137,6 +137,58 @@ class MiscMixin(BaseMixin):
         """
         num = format(random.randint(start, limit), '.2f')
         return decimal.Decimal(num)
+
+    @staticmethod
+    def fee():
+        """ The conference fee """
+        num = format(random.randint(20, 100), '.2f')
+        return decimal.Decimal(num)
+
+    @staticmethod
+    def phd_working_hours(budget):
+        """
+        :param budget: the phd budget
+        :return: a number representing the working hours spent on a phd
+        """
+        if budget in range(500000):
+            return 500
+        elif budget in range(500001, 1000000):
+            return random.randint(501, 1000)
+        elif budget in range(1000001, 2000000):
+            return random.randint(1001, 2000)
+        elif budget in range(2000001, 3000000):
+            return random.randint(2001, 3000)
+        elif budget in range(3000001, 4000001):
+            return random.randint(3001, 4000)
+        else:
+            return random.randint(4001, 7000)
+
+    @staticmethod
+    def publication_wins_first_prize():
+        """ A publication has 10% to win the first prize """
+        flip = random.random()
+        return True if flip < 0.1 else False
+
+    @staticmethod
+    def is_volunteer():
+        """ A scientist has a 15% to be a volunteer in a conference """
+        flip = random.random()
+        return True if flip < 0.15 else False
+
+    @staticmethod
+    def choices_no_replacement(population, weights=None, k=1):
+        result = []
+        for n in range(k):
+            pos = random.choices(
+                range(len(population)),
+                weights,
+                k=1
+            )[0]
+            result.append(population[pos])
+            del population[pos]
+            if weights:
+                del weights[pos]
+        return result
 
     def __str__(self):
         return "MiscMixin"
@@ -270,7 +322,8 @@ class ConferenceFactory(object):
         """
         for conf_id, data in enumerate(c.CONFERENCES, start=1):
             title, start_date, end_date = data
-            data = {"conference_id": conf_id, "start_date": start_date, "end_date": end_date, "title": title}
+            data = {"conference_id": conf_id, "start_date": start_date, "end_date": end_date, "title": title,
+                    "fee": _fg.fee()}
             yield ent.Conference.build_from_data(data)
 
     def __str__(self):
@@ -301,7 +354,7 @@ class FundingFactory(object):
     """Class used for generating fake Publication entities"""
 
     @staticmethod
-    def generate_fundings(n=10, start=1):
+    def generate_funding(n=10, start=1):
         """
         Generator of Funding objects
         :param n: number of objects to be generated

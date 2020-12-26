@@ -43,6 +43,7 @@ class Conference(BaseEntity):
         self.start_date = None
         self.end_date = None
         self.title = None
+        self.fee = None
 
     def __str__(self):
         return f"Conference(conference_id={self.conference_id}, faculty_id={self.faculty_id})"

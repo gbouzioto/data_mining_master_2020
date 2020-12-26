@@ -118,7 +118,8 @@ CREATE TABLE public.conference (
     address_id bigint NOT NULL,
     start_date date NOT NULL,
     end_date date NOT NULL,
-    title character varying NOT NULL
+    title character varying NOT NULL,
+    fee numeric(6,2) NOT NULL
 );
 
 
@@ -259,7 +260,7 @@ CREATE TABLE public.publication (
     summary text NOT NULL,
     conference_id bigint NOT NULL,
     funding_id bigint NOT NULL,
-    won_first_prize boolean DEFAULT false NOT NULL
+    won_first_prize boolean DEFAULT false
 );
 
 
@@ -311,8 +312,7 @@ CREATE TABLE public.scientist (
 CREATE TABLE public.scientist_participates_at_conference (
     conference_id bigint NOT NULL,
     scientist_id bigint NOT NULL,
-    is_volunteer boolean DEFAULT false NOT NULL,
-    fee numeric(6,2) NOT NULL
+    is_volunteer boolean DEFAULT false NOT NULL
 );
 
 
