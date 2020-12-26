@@ -82,7 +82,7 @@ SET default_table_access_method = heap;
 CREATE TABLE public.address (
     address_id bigint NOT NULL,
     address_name character varying NOT NULL,
-    address_number integer NOT NULL,
+    address_number character varying NOT NULL,
     city character varying NOT NULL,
     country character varying NOT NULL,
     postal_code character varying NOT NULL

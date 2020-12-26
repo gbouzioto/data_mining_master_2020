@@ -1,78 +1,76 @@
+import datetime
 import decimal
 import random
-import datetime
 
 from faker import Faker
-from faker.providers import person, phone_number, internet, address, date_time, lorem, misc
+from faker.providers import person, phone_number, address, date_time, lorem
 
-import constants as c
-import entities as ent
+import exercise_1.scripts.constants as c
+import exercise_1.scripts.entities as ent
 
 
 class BaseMixin(object):
     """BaseMixin"""
 
     def __init__(self, fake: Faker):
-        self._fake = fake
+        self._fake_gr = fake['el-GR']
+        self._fake_us = fake['en-US']
 
     def __str__(self):
         return "BaseMixin"
 
 
-class AddressMixin(BaseMixin):
-    """Address Mixin"""
+class GreekAddressMixin(BaseMixin):
+    """GreekAddressMixin"""
     def __init__(self, fake: Faker):
-        super(AddressMixin, self).__init__(fake)
-        self._fake.add_provider(address)
+        super(GreekAddressMixin, self).__init__(fake)
+        self._fake_gr.add_provider(address)
 
     def address_name(self):
-        return self._fake.street_name()
+        return self._fake_gr.street_name()
 
     def address_number(self):
-        return self._fake.building_number()
-
-    def country(self):
-        return self._fake.country()
+        return self._fake_gr.building_number()
 
     def city(self):
-        return self._fake.city()
+        return self._fake_gr.city()
 
     def postal_code(self):
-        return self._fake.postcode()
+        return self._fake_gr.postcode()
 
     def __str__(self):
-        return "AddressMixin"
+        return "GreekAddressMixin"
 
 
-class PersonMixin(BaseMixin):
-    """BookMixin"""
+class GreekPersonMixin(BaseMixin):
+    """GreekPersonMixin"""
     def __init__(self, fake: Faker):
-        super(PersonMixin, self).__init__(fake)
-        self._fake.add_provider(person)
-        self._fake.add_provider(phone_number)
+        super(GreekPersonMixin, self).__init__(fake)
+        self._fake_gr.add_provider(person)
+        self._fake_gr.add_provider(phone_number)
 
     def first_name_and_last_name(self):
-        gender = 'Male' if self._fake.random.randint(0, 1) == 0 else 'Female'
+        gender = 'Male' if random.randint(0, 1) == 0 else 'Female'
         if gender == 'Male':
-            return self._fake.first_name_male(), self._fake.last_name_male()
-        return self._fake.first_name_female(), self._fake.last_name_female()
+            return self._fake_gr.first_name_male(), self._fake_gr.last_name_male()
+        return self._fake_gr.first_name_female(), self._fake_gr.last_name_female()
 
     def __str__(self):
-        return "PersonMixin"
+        return "GreekPersonMixin"
 
 
 class DateTimeMixin(BaseMixin):
     """DateTimeMixin"""
     def __init__(self, fake: Faker):
         super(DateTimeMixin, self).__init__(fake)
-        self._fake.add_provider(date_time)
+        self._fake_us.add_provider(date_time)
 
     def date(self, start_date='-30y', end_date='-10y'):
         """
         :param start_date: start_date
         :param end_date: end_date
         """
-        date = self._fake.date_between(start_date=start_date, end_date=end_date)
+        date = self._fake_us.date_between(start_date=start_date, end_date=end_date)
         return date.strftime("%d/%m/%Y")
 
     def funding_start_end_date(self, funding):
@@ -80,7 +78,7 @@ class DateTimeMixin(BaseMixin):
         :param funding: the funding amount
         :return: a tuple of start and end dates
         """
-        date = self._fake.date_between(start_date='-3y', end_date='-1y')
+        date = self._fake_us.date_between(start_date='-3y', end_date='-1y')
         if funding in range(500000):
             delta = datetime.timedelta(weeks=24)
         elif funding in range(500001, 1000000):
@@ -99,34 +97,32 @@ class DateTimeMixin(BaseMixin):
         return "DateTimeMixin"
 
 
-class LoremMixin(BaseMixin):
-    """LoremMixin"""
+class USLoremMixin(BaseMixin):
+    """USLoremMixin"""
     def __init__(self, fake: Faker):
-        super(LoremMixin, self).__init__(fake)
-        self._fake.add_provider(lorem)
+        super(USLoremMixin, self).__init__(fake)
+        self._fake_us.add_provider(lorem)
 
     def sentence(self, nb_words=10):
         """
         :param nb_words: Number of words to be included
         """
-        return self._fake.sentence(nb_words=nb_words)
+        return self._fake_us.sentence(nb_words=nb_words)
 
     def text(self, max_nb_chars=200):
         """
         :param max_nb_chars: Number of characters to be included
         """
-        return self._fake.text(max_nb_chars)
+        return self._fake_us.text(max_nb_chars)
 
     def __str__(self):
-        return "LoremMixin"
+        return "USLoremMixin"
 
 
 class MiscMixin(BaseMixin):
     """MiscMixin"""
     def __init__(self, fake: Faker):
         super(MiscMixin, self).__init__(fake)
-        self._fake.add_provider(misc)
-        self._fake.add_provider(internet)
 
     @staticmethod
     def budget(start=500000, limit=4000000):
@@ -150,9 +146,9 @@ class MiscMixin(BaseMixin):
         :param budget: the phd budget
         :return: a number representing the working hours spent on a phd
         """
-        if budget in range(500000):
+        if budget in range(500001):
             return 500
-        elif budget in range(500001, 1000000):
+        elif budget in range(500002, 1000000):
             return random.randint(501, 1000)
         elif budget in range(1000001, 2000000):
             return random.randint(1001, 2000)
@@ -194,11 +190,11 @@ class MiscMixin(BaseMixin):
         return "MiscMixin"
 
 
-class FakeGenerator(AddressMixin, PersonMixin, DateTimeMixin, LoremMixin, MiscMixin):
+class FakeGenerator(GreekAddressMixin, GreekPersonMixin, DateTimeMixin, USLoremMixin, MiscMixin):
     """Class used for generating fake data"""
 
     def __init__(self):
-        self._fake = Faker()
+        self._fake = Faker(['en-US', 'el-GR'])
         super(FakeGenerator, self).__init__(self._fake)
 
     def clear_unique(self):
@@ -224,7 +220,7 @@ class AddressFactory(object):
         """
         for address_id in range(start, n + start):
             data = {"address_id": address_id, "address_name": _fg.address_name(),
-                    "address_number": _fg.address_number(), "city": _fg.city(), "country": _fg.country(),
+                    "address_number": _fg.address_number(), "city": _fg.city(), "country": c.GREECE,
                     "postal_code": _fg.postal_code()}
             yield ent.Address.build_from_data(data)
 
@@ -343,7 +339,8 @@ class PublicationFactory(object):
         for pub_id in range(start, n + start):
             nb_words = random.randint(10, 15)
             max_nb_chars = random.randint(2000, 3000)
-            data = {"publication_id": pub_id, "title": _fg.sentence(nb_words), "summary": _fg.text(max_nb_chars)}
+            data = {"publication_id": pub_id, "title": _fg.sentence(nb_words), "summary": _fg.text(max_nb_chars),
+                    "won_first_prize": False}
             yield ent.Publication.build_from_data(data)
 
     def __str__(self):

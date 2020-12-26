@@ -2,9 +2,10 @@ import functools
 import random
 
 import psycopg2
-import factories as f
-import constants as c
 from psycopg2.extras import execute_values
+
+import exercise_1.scripts.constants as c
+import exercise_1.scripts.factories as f
 
 
 def safe_connection(error_msg=None):
@@ -106,7 +107,7 @@ class ScientificCommunityDBManager(object):
 
         # generate and insert addresses
         addresses = list(f.AddressFactory.generate_addresses(n=conf_num))
-        values = [[ad.address_name, ad.address_number, ad.city, ad.postal_code, ad.country] for ad in addresses]
+        values = [[ad.address_name, ad.address_number, ad.city, ad.country, ad.postal_code] for ad in addresses]
         execute_values(self._cursor, sql=_SQL.ADDRESS_SQL, argslist=values)
 
         # adjust date

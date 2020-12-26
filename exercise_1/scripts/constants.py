@@ -1,4 +1,6 @@
 """Constants"""
+# Countries
+GREECE = "Ελλάδα"
 # University names
 EKPA = "National and Kapodistrian University of Athens"
 
@@ -31,7 +33,7 @@ MINISTRY_OF_HEALTH = "Ministry of Health"
 MINISTRY_OF_TOURISM = "Ministry of Tourism"
 NATIONAL_BANK_OF_GREECE = "National Bank of Greece"
 EURO_BANK = "Eurobank"
-PEIREUS_BANK = "Peireus bank"
+PEIREAUS_BANK = "Peireaus bank"
 ALPHA_BANK = "Alphabank"
 
 UNIS = [EKPA]
@@ -139,7 +141,7 @@ FUNDING = {
         MINISTRY_OF_TOURISM,
         NATIONAL_BANK_OF_GREECE,
         EURO_BANK,
-        PEIREUS_BANK,
+        PEIREAUS_BANK,
         ALPHA_BANK],
     "weights": [0.25, 0.15, 0.1, 0.05, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1]
 }
