@@ -4,8 +4,8 @@ import random
 import psycopg2
 from psycopg2.extras import execute_values
 
-import exercise_1.scripts.constants as c
-import exercise_1.scripts.factories as f
+import exercise_2.scripts.constants as c
+import exercise_2.scripts.factories as f
 
 
 def safe_connection(error_msg=None):

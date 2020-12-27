@@ -5,8 +5,8 @@ import random
 from faker import Faker
 from faker.providers import person, phone_number, address, date_time, lorem
 
-import exercise_1.scripts.constants as c
-import exercise_1.scripts.entities as ent
+import exercise_2.scripts.constants as c
+import exercise_2.scripts.entities as ent
 
 
 class BaseMixin(object):

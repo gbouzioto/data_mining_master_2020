@@ -5,7 +5,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from exercise_1.scripts.database_manager import ScientificCommunityDBManager
+from exercise_2.scripts.database_manager import ScientificCommunityDBManager
 
 
 def _parse_user_args():
