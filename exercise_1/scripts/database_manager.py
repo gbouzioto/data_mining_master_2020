@@ -236,6 +236,7 @@ class ScientificCommunityDBManager(object):
             scientist_starting_id += sc_per_fac
             funding_starting_id += funding_num
             publication_starting_id += publications_num
+            fac_id += 1
 
     @safe_connection("Error in executing commit method")
     def commit(self):
