@@ -65,20 +65,20 @@ update scientist set name='ΠΠ' where scientist_id in (select scientist_id from
 
 --noise No5
 
-update phd set date_received='' where scientist_id=7;
-update phd set date_received='' where scientist_id=6;
-update phd set date_received='' where scientist_id=3;
-update phd set date_received='' where scientist_id=1;
-update phd set date_received='' where scientist_id=8;
-update phd set date_received='' where scientist_id=9;
-update phd set date_received='' where scientist_id=11;
-update phd set date_received='' where scientist_id=12;
-update phd set date_received='' where scientist_id=13;
-update phd set date_received='' where scientist_id=14;
-update phd set date_received='' where scientist_id=15;
-update phd set date_received='' where scientist_id=16;
-update phd set date_received='' where scientist_id=17;
-update phd set date_received='' where scientist_id=21;
+update phd set date_received='1-1-900' where scientist_id=7;
+update phd set date_received='1-1-900' where scientist_id=6;
+update phd set date_received='1-1-900' where scientist_id=3;
+update phd set date_received='1-1-900' where scientist_id=1;
+update phd set date_received='1-1-900' where scientist_id=8;
+update phd set date_received='1-1-900' where scientist_id=9;
+update phd set date_received='1-1-900' where scientist_id=11;
+update phd set date_received='1-1-900' where scientist_id=12;
+update phd set date_received='1-1-3000' where scientist_id=13;
+update phd set date_received='1-1-3000' where scientist_id=14;
+update phd set date_received='1-1-3000' where scientist_id=15;
+update phd set date_received='1-1-3000' where scientist_id=16;
+update phd set date_received='1-1-3000' where scientist_id=17;
+update phd set date_received='1-1-3000' where scientist_id=21;
 
 --noise No6
 
