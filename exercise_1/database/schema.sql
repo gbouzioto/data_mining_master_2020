@@ -23,6 +23,7 @@ ALTER TABLE IF EXISTS ONLY public.scientist_participates_at_conference DROP CONS
 ALTER TABLE IF EXISTS ONLY public.publication_secondary_author DROP CONSTRAINT IF EXISTS publication_secondary_author_scientist_scientist_id_fk;
 ALTER TABLE IF EXISTS ONLY public.publication_secondary_author DROP CONSTRAINT IF EXISTS publication_secondary_author_publication_publication_id_fk;
 ALTER TABLE IF EXISTS ONLY public.publication DROP CONSTRAINT IF EXISTS publication_scientist_scientist_id_fk;
+ALTER TABLE IF EXISTS ONLY public.publication DROP CONSTRAINT IF EXISTS publication_funding_funding_id_fk;
 ALTER TABLE IF EXISTS ONLY public.publication DROP CONSTRAINT IF EXISTS publication_conference_conference_id_fk;
 ALTER TABLE IF EXISTS ONLY public.phd DROP CONSTRAINT IF EXISTS phd_scientist_scientist_id_fk_2;
 ALTER TABLE IF EXISTS ONLY public.phd DROP CONSTRAINT IF EXISTS phd_scientist_scientist_id_fk;
@@ -182,7 +183,7 @@ CREATE TABLE public.funding (
     funder character varying NOT NULL,
     budget numeric(10,2) NOT NULL,
     start_date date NOT NULL,
-    end_date date
+    end_date date NOT NULL
 );
 
 
@@ -572,6 +573,14 @@ ALTER TABLE ONLY public.phd
 
 ALTER TABLE ONLY public.publication
     ADD CONSTRAINT publication_conference_conference_id_fk FOREIGN KEY (conference_id) REFERENCES public.conference(conference_id);
+
+
+--
+-- Name: publication publication_funding_funding_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.publication
+    ADD CONSTRAINT publication_funding_funding_id_fk FOREIGN KEY (funding_id) REFERENCES public.funding(funding_id);
 
 
 --
