@@ -260,7 +260,7 @@ CREATE TABLE public.publication (
     summary text NOT NULL,
     conference_id bigint NOT NULL,
     funding_id bigint NOT NULL,
-    won_first_prize boolean DEFAULT false
+    won_first_prize boolean DEFAULT false NOT NULL
 );
 
 
